@@ -136,7 +136,6 @@ def dimension_stacking(
 
     # Get the number of layers to stack
     dim_size = len(dimensions)
-
     group_range = np.unique([len(f) for gp, f in fps(group_by=group_by)])[0]
 
     for gi in range(0, group_range):
@@ -155,20 +154,31 @@ def dimension_stacking(
         with BioReader(input_files[0]) as br:
             metadata = br.metadata
 
+        image_z_size = 1
+        image_t_size = 1
+        image_c_size = 1
+        group_by = "z"
+        if group_by == "c":
+            image_c_size = dim_size
+        elif group_by == "t":
+            image_t_size = dim_size
+        elif group_by == "z":
+            image_z_size = dim_size
+        else:
+            pass
+        
+
         with BioWriter(
             out_dir.joinpath(out_name),
             metadata=metadata,
             max_workers=num_workers,
             backend=WRITE_BACKEND,
-            Z=dim_size
+            Z=image_z_size,
+            C=image_c_size,
+            T=image_t_size
         ) as bw:
             # Adjust the dimensions before writing
-            if group_by == "c":
-                bw.C = dim_size
-            if group_by == "t":
-                bw.T = dim_size
             if group_by == "z":
-                bw.Z = dim_size
                 bw.ps_z = z_distance(Path(input_files[0]))
 
             for file, di in zip(input_files, range(0, dim_size)):
